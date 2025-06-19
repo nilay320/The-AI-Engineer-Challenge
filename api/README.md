@@ -21,6 +21,14 @@ source venv/bin/activate  # On Windows, use: venv\Scripts\activate
 pip install fastapi uvicorn openai pydantic
 ```
 
+## Environment Variables
+
+Create a `.env` file in the `api` directory with the following content:
+
+```
+OPENAI_API_KEY=your-openai-api-key-here
+```
+
 ## Running the Server
 
 1. Make sure you're in the `api` directory:
@@ -45,8 +53,7 @@ The server will start on `http://localhost:8000`
 {
     "developer_message": "string",
     "user_message": "string",
-    "model": "gpt-4.1-mini",  // optional
-    "api_key": "your-openai-api-key"
+    "model": "gpt-4.1-mini"  // optional
 }
 ```
 - **Response**: Streaming text response
