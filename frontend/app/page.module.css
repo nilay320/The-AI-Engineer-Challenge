@@ -14,7 +14,6 @@
   padding: 80px;
   gap: 64px;
   font-family: var(--font-geist-sans);
-  background: linear-gradient(120deg, #fff7e6 0%, #faf3fb 100%);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -222,15 +221,15 @@ a.secondary {
   box-shadow: 0 2px 12px rgba(255,152,0,0.04), 0 2px 12px rgba(156,39,176,0.04);
   padding: 24px;
   width: 100%;
-  max-width: 520px;
+  max-width: 740px;
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
 .chatHistory {
-  min-height: 200px;
-  max-height: 320px;
+  min-height: 400px;
+  max-height: 640px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;

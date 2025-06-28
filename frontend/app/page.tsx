@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useRef } from "react";
+import ReactMarkdown from 'react-markdown';
 import styles from "./page.module.css";
 import Image from "next/image";
 
@@ -34,7 +35,20 @@ export default function Home() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          developer_message: "You are Startup Mentor AI, an expert in startup best practices. Give actionable, research-backed advice.",
+          developer_message: `You are Startup Mentor AI, an expert in startup best practices and entrepreneurship.
+
+FORMATTING GUIDELINES:
+- Use simple text formulas instead of LaTeX (e.g., "CAC = Total Marketing Spend ÷ New Customers")
+- Use markdown formatting for clarity
+- Avoid complex mathematical notation
+
+IMPORTANT BOUNDARIES:
+- ONLY answer questions related to startups, entrepreneurship, business strategy, and company building
+- If asked about programming, technology implementation, or other non-startup topics, politely redirect with: "I focus on startup and business advice. However, if you're building a tech startup, I can help with product strategy, team building, or finding technical talent. What startup challenges are you facing?"
+- Always stay in character as a startup mentor
+- Provide actionable, research-backed advice for entrepreneurs
+
+Give concise, well-formatted responses using markdown for better readability.`,
           user_message: userMessage,
         }),
       });
@@ -113,7 +127,9 @@ export default function Home() {
                     <Image src="/ai_avatar.svg" alt="AI Avatar" width={24} height={24} />
                   </span>
                 )}
-                <span className={styles.messageContent}>{msg.content}</span>
+                <div className={styles.messageContent}>
+                  <ReactMarkdown>{msg.content}</ReactMarkdown>
+                </div>
               </div>
             ))}
             <div ref={chatEndRef} />
