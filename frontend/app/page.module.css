@@ -199,35 +199,6 @@ a.secondary {
   flex: 1;
 }
 
-.heroActions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.uploadButton {
-  background: rgba(255, 255, 255, 0.15);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 8px;
-  padding: 8px 16px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  backdrop-filter: blur(10px);
-}
-
-.uploadButton:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.25);
-  border-color: rgba(255, 255, 255, 0.5);
-}
-
-.uploadButton:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
 .docCount {
   background: rgba(255, 255, 255, 0.2);
   color: white;
@@ -342,6 +313,45 @@ a.secondary {
   box-shadow: 0 4px 24px rgba(0,0,0,0.02);
 }
 
+.chatHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: var(--gray-alpha-100);
+  border-bottom: 1px solid var(--gray-alpha-200);
+}
+
+.chatTitle {
+  font-weight: 600;
+  color: var(--foreground);
+  font-size: 16px;
+}
+
+.uploadButtonHeader {
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.uploadButtonHeader:hover:not(:disabled) {
+  background: #0056b3;
+}
+
+.uploadButtonHeader:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
 .chatHistory {
   height: 400px;
   overflow-y: auto;
@@ -355,8 +365,23 @@ a.secondary {
 .placeholder {
   text-align: center;
   color: #888;
-  font-style: italic;
   padding: 40px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.placeholderIcon {
+  font-size: 48px;
+  opacity: 0.5;
+}
+
+.placeholderHint {
+  font-size: 14px;
+  color: #999;
+  margin-top: 8px;
+  font-style: italic;
 }
 
 .userMessage {
@@ -572,6 +597,35 @@ a.secondary {
   padding: 24px;
 }
 
+.uploadInstructions {
+  margin-bottom: 20px;
+  padding: 16px;
+  background: rgba(0, 123, 255, 0.05);
+  border: 1px solid rgba(0, 123, 255, 0.1);
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.uploadInstructions p {
+  margin: 0 0 8px 0;
+  color: var(--foreground);
+}
+
+.uploadInstructions ul {
+  margin: 8px 0;
+  padding-left: 20px;
+  color: #666;
+}
+
+.uploadInstructions li {
+  margin-bottom: 4px;
+}
+
+.uploadInstructions em {
+  color: #007bff;
+  font-weight: 500;
+}
+
 .dropZone {
   border: 2px dashed var(--gray-alpha-200);
   border-radius: 12px;
@@ -631,16 +685,22 @@ a.secondary {
     text-align: center;
   }
   
-  .heroActions {
-    width: 100%;
-    justify-content: center;
-  }
-  
   .chatContainer {
     margin: 0 -16px;
     border-radius: 0;
     border-left: none;
     border-right: none;
+  }
+  
+  .chatHeader {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  
+  .uploadButtonHeader {
+    align-self: stretch;
+    justify-content: center;
   }
   
   .chatHistory {
@@ -675,5 +735,10 @@ a.secondary {
   
   .dropZone {
     padding: 20px 16px;
+  }
+  
+  .uploadInstructions {
+    padding: 12px;
+    font-size: 13px;
   }
 }

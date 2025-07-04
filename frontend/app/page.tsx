@@ -123,16 +123,16 @@ export default function Home() {
         : {
             developer_message: `You are Startup Mentor AI, an expert in startup best practices and entrepreneurship.
 
+STRICT CONTENT BOUNDARIES:
+- ONLY answer questions related to startups, entrepreneurship, business strategy, company building, and business operations
+- If asked about programming, technology implementation, or other non-startup/business topics, politely redirect with: "I focus exclusively on startup and business advice. However, if you're building a tech startup, I can help with product strategy, team building, or finding technical talent. What startup or business challenges are you facing?"
+- Always stay in character as a startup mentor
+- Provide actionable, research-backed advice for entrepreneurs and business builders
+
 FORMATTING GUIDELINES:
 - Use simple text formulas instead of LaTeX (e.g., "CAC = Total Marketing Spend ÷ New Customers")
 - Use markdown formatting for clarity
 - Avoid complex mathematical notation
-
-IMPORTANT BOUNDARIES:
-- ONLY answer questions related to startups, entrepreneurship, business strategy, and company building
-- If asked about programming, technology implementation, or other non-startup topics, politely redirect with: "I focus on startup and business advice. However, if you're building a tech startup, I can help with product strategy, team building, or finding technical talent. What startup challenges are you facing?"
-- Always stay in character as a startup mentor
-- Provide actionable, research-backed advice for entrepreneurs
 
 Give concise, well-formatted responses using markdown for better readability.`,
             user_message: userMessage,
@@ -253,31 +253,22 @@ Give concise, well-formatted responses using markdown for better readability.`,
         <div className={styles.heroText}>
           Startup Mentor AI<br />
           <span style={{ fontWeight: 400, fontSize: "1rem" }}>
-            {ragMode ? "Your RAG-enhanced startup advisor" : "Your friendly, research-backed startup advisor"}
+            {ragMode ? "Your document-enhanced startup advisor" : "Your friendly, research-backed startup advisor"}
           </span>
         </div>
-        <div className={styles.heroActions}>
-          <button 
-            className={styles.uploadButton}
-            onClick={openFileUpload}
-            disabled={uploading}
-          >
-            📄 Upload PDF
-          </button>
-          {uploadedDocs.length > 0 && (
-            <span className={styles.docCount}>
-              {uploadedDocs.length} doc{uploadedDocs.length !== 1 ? 's' : ''}
-            </span>
-          )}
-        </div>
+        {uploadedDocs.length > 0 && (
+          <div className={styles.docCount}>
+            {uploadedDocs.length} doc{uploadedDocs.length !== 1 ? 's' : ''}
+          </div>
+        )}
       </div>
       
       <main className={styles.main}>
         <h1 className={styles.title}>🚀 Startup Mentor AI</h1>
         <p className={styles.subtitle}>
           {ragMode 
-            ? "Ask me about your uploaded documents or general startup advice!" 
-            : "Ask me anything about building a successful startup! I'll give you research-backed, actionable advice."
+            ? "Ask me about your uploaded startup documents or get general startup advice!" 
+            : "Ask me anything about building a successful startup! Upload company documents for more specific insights."
           }
         </p>
         
@@ -305,13 +296,35 @@ Give concise, well-formatted responses using markdown for better readability.`,
         )}
         
         <div className={styles.chatContainer}>
+          <div className={styles.chatHeader}>
+            <div className={styles.chatTitle}>
+              💬 {ragMode ? "Document-Enhanced Chat" : "Startup Advisory Chat"}
+            </div>
+            <button 
+              className={styles.uploadButtonHeader}
+              onClick={openFileUpload}
+              disabled={uploading}
+              title="Upload a startup or company document"
+            >
+              {uploading ? "⏳" : "📄"} Upload PDF
+            </button>
+          </div>
+          
           <div className={styles.chatHistory}>
             {messages.length === 0 && (
               <div className={styles.placeholder}>
-                {ragMode 
-                  ? "Start asking questions about your uploaded documents! 📄" 
-                  : "Start the conversation! 👋"
-                }
+                <div className={styles.placeholderIcon}>💡</div>
+                <div>
+                  {ragMode 
+                    ? "Ask questions about your uploaded documents or get general startup advice!" 
+                    : "Start by asking a startup question or upload a company document for specific insights!"
+                  }
+                </div>
+                {!ragMode && (
+                  <div className={styles.placeholderHint}>
+                    Try: "How do I validate my startup idea?" or upload a business plan for analysis
+                  </div>
+                )}
               </div>
             )}
             {messages.map((msg, idx) => (
@@ -376,7 +389,7 @@ Give concise, well-formatted responses using markdown for better readability.`,
         <div className={styles.modal}>
           <div className={styles.modalContent}>
             <div className={styles.modalHeader}>
-              <h3>Upload PDF Document</h3>
+              <h3>Upload Startup/Company Document</h3>
               <button 
                 className={styles.closeButton}
                 onClick={() => setShowUploadModal(false)}
@@ -385,6 +398,18 @@ Give concise, well-formatted responses using markdown for better readability.`,
               </button>
             </div>
             <div className={styles.modalBody}>
+              <div className={styles.uploadInstructions}>
+                <p><strong>📋 Supported document types:</strong></p>
+                <ul>
+                  <li>Business plans and pitch decks</li>
+                  <li>Company documentation and reports</li>
+                  <li>Startup case studies and research</li>
+                  <li>Financial models and projections</li>
+                  <li>Market research and analysis</li>
+                </ul>
+                <p><em>Please ensure your document contains startup or business-related content.</em></p>
+              </div>
+              
               <div 
                 className={styles.dropZone}
                 onClick={() => fileInputRef.current?.click()}
@@ -402,7 +427,7 @@ Give concise, well-formatted responses using markdown for better readability.`,
                 <div className={styles.dropContent}>
                   📄
                   <p>Click to select or drag and drop a PDF file</p>
-                  <small>Maximum file size: 10MB</small>
+                  <small>Maximum file size: 10MB • Business/startup content only</small>
                 </div>
               </div>
               <input

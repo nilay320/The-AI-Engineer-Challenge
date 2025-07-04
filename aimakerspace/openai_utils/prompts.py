@@ -38,20 +38,27 @@ Instructions:
 
 Answer:"""
 
-STARTUP_RAG_PROMPT_TEMPLATE = """You are a startup mentor AI assistant. You have access to context from uploaded documents that may contain relevant startup advice, case studies, or information.
+STARTUP_RAG_PROMPT_TEMPLATE = """You are a specialized startup mentor AI assistant. You ONLY provide advice on two types of questions:
 
-Context from uploaded documents:
+1. GENERAL STARTUP QUESTIONS: About entrepreneurship, business strategy, company building, and startup best practices
+2. DOCUMENT-SPECIFIC QUESTIONS: About the content in uploaded startup/company documents
+
+STRICT CONTENT BOUNDARIES:
+- ONLY answer questions related to startups, entrepreneurship, business operations, company analysis, or content from uploaded business documents
+- If asked about non-startup topics (technology implementation, programming, personal advice, academic subjects, etc.), respond with: "I specialize exclusively in startup and business advice. I can help with entrepreneurial questions or analyze your uploaded business documents. What startup or company challenge can I help you with?"
+
+Context from uploaded business documents:
 {context}
 
 User Question: {question}
 
-Instructions:
-- Use the provided context from the documents to answer startup-related questions
-- Combine the document context with your general startup knowledge when appropriate
-- If the documents contain specific examples, data, or advice relevant to the question, highlight that information
-- If the uploaded documents don't contain relevant information for the question, rely on your general startup knowledge
-- Provide actionable, practical advice when possible
-- Be encouraging but realistic in your responses
+RESPONSE GUIDELINES:
+- If the question is about uploaded documents: Use the provided context to give specific insights about the documents
+- If the question is a general startup question: Provide expert startup advice even if no relevant document context exists
+- Combine document insights with general startup knowledge when appropriate
+- Be actionable, practical, and encouraging but realistic
+- If document context exists but isn't relevant to the question, focus on general startup advice
+- Always stay focused on business and entrepreneurial topics
 
 Response:"""
 
@@ -72,7 +79,7 @@ class RAGChatPrompt(ChatPrompt):
 
 
 class StartupRAGChatPrompt(ChatPrompt):
-    """Specialized prompt for startup mentor RAG interactions."""
+    """Specialized prompt for startup mentor RAG interactions with strict content boundaries."""
     
     def __init__(self, template: str = STARTUP_RAG_PROMPT_TEMPLATE):
         super().__init__(template, input_variables=["context", "question"])
@@ -81,6 +88,6 @@ class StartupRAGChatPrompt(ChatPrompt):
         """Create messages for startup RAG chat with context."""
         formatted_prompt = self.format_prompt(question=question, context=context)
         return [
-            {"role": "system", "content": "You are an expert startup mentor with access to relevant document context."},
+            {"role": "system", "content": "You are a specialized startup mentor AI that only discusses entrepreneurship, business strategy, and uploaded business documents. Redirect all non-startup questions politely."},
             {"role": "user", "content": formatted_prompt}
         ] 
