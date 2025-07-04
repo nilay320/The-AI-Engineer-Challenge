@@ -42,13 +42,38 @@ class RAGService:
         
         # Keywords that indicate startup/business content
         startup_keywords = [
+            # Core startup terms
             'startup', 'business', 'company', 'entrepreneur', 'venture', 'funding', 'investment',
             'revenue', 'profit', 'market', 'customer', 'product', 'service', 'strategy',
             'business plan', 'pitch', 'investor', 'valuation', 'growth', 'scale', 'competition',
             'team', 'founder', 'CEO', 'CTO', 'board', 'equity', 'shares', 'financial',
             'marketing', 'sales', 'operations', 'model', 'vision', 'mission', 'goals',
             'metrics', 'KPI', 'ROI', 'CAC', 'LTV', 'churn', 'acquisition', 'retention',
-            'ecosystem', 'industry', 'sector', 'corporate', 'organization', 'management'
+            'ecosystem', 'industry', 'sector', 'corporate', 'organization', 'management',
+            
+            # Startup methodologies and frameworks
+            'lean startup', 'agile', 'mvp', 'minimum viable product', 'product market fit',
+            'pivot', 'iteration', 'hypothesis', 'validation', 'feedback loop', 'user research',
+            'design thinking', 'customer development', 'build measure learn', 'sprint',
+            'scrum', 'kanban', 'roadmap', 'backlog', 'user story', 'persona', 'journey',
+            
+            # Business best practices and concepts
+            'best practices', 'framework', 'methodology', 'process', 'workflow', 'optimization',
+            'efficiency', 'productivity', 'performance', 'quality', 'standards', 'guidelines',
+            'governance', 'compliance', 'risk management', 'decision making', 'leadership',
+            'culture', 'values', 'principles', 'ethics', 'transparency', 'accountability',
+            
+            # Growth and scaling terms
+            'scaling', 'expansion', 'market entry', 'go to market', 'gtm', 'launch',
+            'product launch', 'market penetration', 'user acquisition', 'growth hacking',
+            'viral', 'network effects', 'platform', 'marketplace', 'ecosystem',
+            'partnership', 'collaboration', 'integration', 'automation', 'digitalization',
+            
+            # Financial and operational terms
+            'unit economics', 'burn rate', 'runway', 'cash flow', 'profitability',
+            'monetization', 'pricing', 'business model', 'value proposition', 'competitive advantage',
+            'market share', 'total addressable market', 'tam', 'sam', 'som', 'analysis',
+            'forecast', 'projection', 'budget', 'planning', 'resource allocation'
         ]
         
         # Count startup-related keywords
@@ -62,7 +87,7 @@ class RAGService:
         # Use AI to analyze content relevance
         try:
             analysis_prompt = f"""
-            Analyze the following document excerpt and determine if it's related to startups, companies, or business:
+            Analyze the following document excerpt and determine if it's related to startups, companies, business best practices, or entrepreneurship:
 
             Document excerpt (first 1000 characters):
             {text[:1000]}
@@ -70,7 +95,7 @@ class RAGService:
             Rate the relevance on a scale of 1-10 where:
             - 1-3: Not related to business/startups (e.g., personal documents, academic papers on non-business topics, fiction)
             - 4-6: Somewhat related (e.g., mentions business but not the main focus)
-            - 7-10: Highly relevant (e.g., business plans, startup guides, company reports, financial documents)
+            - 7-10: Highly relevant (e.g., business plans, startup guides, company reports, financial documents, entrepreneurship best practices, business methodologies)
 
             Respond with only a number (1-10) and a brief reason (max 20 words).
             Format: "Score: X, Reason: brief explanation"
@@ -112,6 +137,23 @@ class RAGService:
     def process_pdf(self, file_bytes: bytes, filename: str) -> Dict[str, Any]:
         """Process a PDF file and add it to the vector database after validation."""
         try:
+            # Check if document already exists
+            doc_id = filename  # Use filename as doc ID for simplicity
+            if doc_id in self.document_store:
+                return {
+                    "success": True,
+                    "document_id": doc_id,
+                    "filename": filename,
+                    "total_chunks": self.document_store[doc_id]["total_chunks"],
+                    "chunks_added": 0,  # No new chunks added
+                    "text_preview": "Document already exists in the knowledge base.",
+                    "message": f"📋 Document '{filename}' is already in the knowledge base. No re-processing needed.",
+                    "content_validation": {
+                        "relevance_score": self.document_store[doc_id]["validation_result"]["final_score"],
+                        "ai_assessment": "Previously validated"
+                    }
+                }
+            
             # Load text from PDF
             loader = TextFileLoader("")
             text = loader.load_from_bytes(file_bytes, filename)
@@ -154,7 +196,6 @@ class RAGService:
             chunk_ids = self.vector_db.add_texts(chunks, metadatas)
             
             # Store document metadata
-            doc_id = filename  # Use filename as doc ID for simplicity
             self.document_store[doc_id] = {
                 "filename": filename,
                 "total_text_length": len(text),
