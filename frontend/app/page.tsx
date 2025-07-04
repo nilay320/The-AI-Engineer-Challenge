@@ -154,6 +154,7 @@ Give concise, well-formatted responses using markdown for better readability.`,
       let aiMessage = "";
       let sources: any[] = [];
       let isRagResponse = false;
+      let buffer = "";
       
       if (reader) {
         const decoder = new TextDecoder();
@@ -162,31 +163,40 @@ Give concise, well-formatted responses using markdown for better readability.`,
           if (done) break;
           
           const chunk = decoder.decode(value);
+          buffer += chunk;
           
-          if (ragMode && chunk.startsWith('data: ')) {
+          if (ragMode && uploadedDocs.length > 0) {
             // Handle Server-Sent Events format for RAG
-            try {
-              const jsonStr = chunk.slice(6); // Remove 'data: '
-              if (jsonStr.trim()) {
-                const data = JSON.parse(jsonStr);
-                
-                if (data.type === "metadata") {
-                  sources = data.sources || [];
-                  isRagResponse = data.used_context;
-                } else if (data.type === "content") {
-                  aiMessage += data.content;
-                } else if (data.type === "done") {
-                  break;
-                } else if (data.error) {
-                  throw new Error(data.error);
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || ""; // Keep incomplete line in buffer
+            
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                try {
+                  const jsonStr = line.slice(6).trim(); // Remove 'data: '
+                  if (jsonStr) {
+                    const data = JSON.parse(jsonStr);
+                    
+                    if (data.type === "metadata") {
+                      sources = data.sources || [];
+                      isRagResponse = data.used_context;
+                    } else if (data.type === "content") {
+                      aiMessage += data.content;
+                    } else if (data.type === "done") {
+                      break;
+                    } else if (data.error) {
+                      throw new Error(data.error);
+                    } else if (data.success === false) {
+                      throw new Error(data.error || "Unknown error from backend");
+                    }
+                  }
+                } catch (parseError) {
+                  console.warn("Failed to parse SSE data:", line, parseError);
                 }
               }
-            } catch (parseError) {
-              // If JSON parsing fails, treat as regular text
-              aiMessage += chunk;
             }
           } else {
-            // Regular streaming response
+            // Regular streaming response for non-RAG mode
             aiMessage += chunk;
           }
           

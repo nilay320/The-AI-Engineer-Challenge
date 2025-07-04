@@ -34,7 +34,7 @@ class RAGService:
         
         # Storage for document metadata
         self.document_store = {}
-        self.storage_path = Path("api/rag_storage")
+        self.storage_path = Path("rag_storage")
         self.storage_path.mkdir(exist_ok=True)
     
     def _validate_startup_content(self, text: str) -> Dict[str, Any]:

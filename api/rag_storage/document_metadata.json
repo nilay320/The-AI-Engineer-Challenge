@@ -24,5 +24,48 @@
       "f48988fa-0cb7-4a66-8533-bb1ec3d11c8a"
     ],
     "processed_at": "/Users/nilayjhaveri/Workspace/Projects/ai_maker_space/ai_engineering/code/The-AI-Engineer-Challenge"
+  },
+  "Business-Plan.pdf": {
+    "filename": "Business-Plan.pdf",
+    "total_text_length": 16718,
+    "total_chunks": 22,
+    "chunk_ids": [
+      "d95e0d86-fbbc-4dbf-95a0-5b28a8e60ec9",
+      "e9b7fc13-141f-4a0a-abe6-bd7ce85fb58c",
+      "3866de16-6518-4f17-945f-6492cc501369",
+      "69262f95-d07a-4744-a34f-1463c94a7f0b",
+      "e0aa397e-ef74-43b9-9235-7924600529e5",
+      "b3e6cae0-b62f-46fa-b76c-4c166ffd75a6",
+      "377ef06d-242e-4a96-a82b-4d5836cf015e",
+      "f8271583-454c-4780-a33c-9f183906e7e1",
+      "f042eb54-8ba7-4d5b-8057-05ea91962614",
+      "62d955af-18ef-4f28-9534-00e5e7db403f",
+      "ba068eb6-614d-4df9-b248-eeab9963a824",
+      "8b8e2d5d-864a-4954-9b65-6a3bc70b954f",
+      "3c120260-2709-4748-bd34-e691b416d242",
+      "6d716c28-a29c-499e-80cb-0af68329844c",
+      "ecbbe252-3a4f-4f6d-85c8-5abe8a51ff52",
+      "ef7b8742-658c-4a40-97bb-acef05e2d763",
+      "67ba26af-ff8e-4798-ae03-e3249883a4d9",
+      "e274dd64-ee64-43c1-977c-47806dd0b3c1",
+      "27c8d68e-6d7d-4996-95d4-5cdf1522cd26",
+      "2f9c3928-2c6e-41ad-895b-26e660fffd4e",
+      "ecde285a-0e39-4ff9-b500-5c169ef84775",
+      "cb601e2f-02d7-4088-a093-a303a53d5291"
+    ],
+    "processed_at": "/Users/nilayjhaveri/Workspace/Projects/ai_maker_space/ai_engineering/code/The-AI-Engineer-Challenge/api",
+    "validation_result": {
+      "is_valid": true,
+      "keyword_count": 25,
+      "keyword_density": 1.02,
+      "ai_score": 10,
+      "ai_reason": "It discusses the business plan process for startups and existing businesses, highly relevant to business.",
+      "final_score": 4.02,
+      "validation_details": {
+        "keywords_found": 25,
+        "total_words": 2443,
+        "ai_assessment": "Score 10/10: It discusses the business plan process for startups and existing businesses, highly relevant to business."
+      }
+    }
   }
 }
