@@ -1,31 +1,31 @@
 {
-  "Business-Plan2.pdf": {
-    "filename": "Business-Plan2.pdf",
+  "Business-Plan.pdf": {
+    "filename": "Business-Plan.pdf",
     "total_text_length": 16718,
     "total_chunks": 22,
     "chunk_ids": [
-      "6ae4011a-eafb-442a-9c8b-fb8105b4cf7a",
-      "1ad7db08-a199-4381-a867-ce04b50834ba",
-      "d9b86333-81f7-4244-a128-dfbe055678be",
-      "e13e7873-f12d-492a-9067-64b33aec7d28",
-      "0f0ed3f4-7efa-4e6a-b2ba-bae9c04d8168",
-      "d54d5088-5c74-4082-8f71-1f92ebd57248",
-      "8bc03d33-54df-4df4-8480-331cd1e2043f",
-      "5018eeef-ba0e-41a6-bec5-21068252bde5",
-      "89809267-c9fb-41e3-8cae-00d9a0a8c200",
-      "3f1277fe-3836-47bd-83d3-58b921570d3c",
-      "e6ca342f-8b34-4a91-b084-90b0d21e7d36",
-      "7ddc7607-bd5d-4279-9592-91fd3464bd75",
-      "a72e70f5-5439-47f4-b91a-ebb4959d01f4",
-      "d3d89daf-dd8f-418f-a075-aeaa69aa4695",
-      "d93cd077-2291-41d1-a172-0c06483a7c5e",
-      "9ee7e46a-7ac1-4ae7-aef5-b6719f7a1f92",
-      "d4c54786-b616-46a0-b4f8-74ec71cc4c91",
-      "5b8cb603-7445-480a-8698-3626da1038fe",
-      "5be8f75c-1a2a-4fea-9ab8-b491d5f5c4e9",
-      "e8d46af6-72fb-4399-bef5-d6a615c962b8",
-      "d5603680-bc4b-4896-9af5-6d4984b3c56e",
-      "6802821f-6010-4cf3-bc34-812a084a432b"
+      "ff70bc13-44ad-47f0-a4ab-4a599c6af0be",
+      "31e82d19-f791-408c-ac21-5254a053b98d",
+      "a659fa73-a418-43dc-ac57-4c335032cda3",
+      "aa50e882-0a14-4579-92bb-a983987b7996",
+      "c6bf6d4d-5401-404c-9574-1a9d0c05d816",
+      "26e6b413-ead1-4e90-b96b-174205d61f9d",
+      "cecceabd-ef67-4e38-9d89-b83346a0b725",
+      "61677134-5ea9-4033-82f9-be979eb2d374",
+      "5358534d-5245-4ea9-a8cb-21b5d5dae047",
+      "111b2ee4-5b24-4545-a12d-0bddb5983859",
+      "e6e5636c-4b22-4003-a175-59d88ab0b954",
+      "6de84943-183e-4a55-8f65-c177cd6b2dd5",
+      "dd8436f1-04b2-4aef-83fa-e58956561310",
+      "993c91ca-dc02-4f0e-a700-59d92e2510cd",
+      "fe4100f9-e04b-47c1-97e6-2096a9a2f9ce",
+      "7c17d2bd-8bd0-4813-a306-150a198f68f1",
+      "f8b51744-232a-4bb3-ac3f-9e77f7c61845",
+      "72b8d1f5-6681-4c87-8bba-7fb711dcda60",
+      "07c40c9b-fbec-4b96-9cd3-2c4d599f1f50",
+      "42e1026c-0535-48a5-b6cf-bebdaa81cf48",
+      "b0f6fc6d-9dcd-4a28-906c-8d05f1dcc54e",
+      "74675eb6-18b6-4bb3-b7de-c95b6d89eb73"
     ],
     "processed_at": "/Users/nilayjhaveri/Workspace/Projects/ai_maker_space/ai_engineering/code/The-AI-Engineer-Challenge/api",
     "validation_result": {
@@ -33,12 +33,12 @@
       "keyword_count": 40,
       "keyword_density": 1.64,
       "ai_score": 10,
-      "ai_reason": "The excerpt discusses business plans specifically for startups and existing businesses, highlighting essential components.",
+      "ai_reason": "The excerpt clearly discusses creating a business plan for startups and existing businesses.",
       "final_score": 4.42,
       "validation_details": {
         "keywords_found": 40,
         "total_words": 2443,
-        "ai_assessment": "Score 10/10: The excerpt discusses business plans specifically for startups and existing businesses, highlighting essential components."
+        "ai_assessment": "Score 10/10: The excerpt clearly discusses creating a business plan for startups and existing businesses."
       }
     }
   }

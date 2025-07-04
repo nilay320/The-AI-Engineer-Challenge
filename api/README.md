@@ -196,4 +196,4 @@ Key dependencies include:
 - Chat responses use `gpt-4o-mini` model
 - Vector similarity search uses cosine similarity
 - Document chunks are created with 1000 character limit and 200 character overlap
-- Content validation requires a minimum relevance score of 4.0/10 
+- Content validation requires a minimum relevance score of 3.5/10 

@@ -118,7 +118,7 @@ class RAGService:
         # Combine keyword analysis and AI analysis
         final_score = (keyword_density * 2 + ai_score) / 3
         
-        is_valid = final_score >= 4.0
+        is_valid = final_score >= 3.5
         
         # Print detailed validation scores to backend console
         print("\n" + "="*60)
@@ -135,10 +135,10 @@ class RAGService:
         print(f"🎯 Final Scoring:")
         print(f"   - Formula: (keyword_density × 2 + ai_score) ÷ 3")
         print(f"   - Calculation: ({keyword_density:.2f} × 2 + {ai_score}) ÷ 3 = {final_score:.2f}")
-        print(f"   - Threshold: 4.0/10")
+        print(f"   - Threshold: 3.5/10")
         print(f"   - Result: {'✅ PASS' if is_valid else '❌ FAIL'} ({final_score:.2f}/10)")
         if not is_valid:
-            print(f"   - Needed: {4.0 - final_score:.2f} more points to pass")
+            print(f"   - Needed: {3.5 - final_score:.2f} more points to pass")
         print("="*60)  # Threshold for acceptance
         
         return {

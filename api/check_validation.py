@@ -9,7 +9,7 @@ def show_validation_criteria():
     print("🎯 RAG System Content Validation Criteria")
     print("=" * 60)
     
-    print("📋 ACCEPTANCE THRESHOLD: Final score ≥ 4.0/10")
+    print("📋 ACCEPTANCE THRESHOLD: Final score ≥ 3.5/10")
     print("📊 SCORING FORMULA: (keyword_density × 2 + ai_score) ÷ 3")
     print("")
     
