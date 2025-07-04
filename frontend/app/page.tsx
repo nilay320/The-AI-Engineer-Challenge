@@ -87,14 +87,23 @@ export default function Home() {
           text_preview: result.text_preview
         };
         
-        setUploadedDocs(prev => [...prev, newDoc]);
+        // Check if document was already processed
+        const isAlreadyProcessed = result.chunks_added === "Already processed";
+        
+        if (!isAlreadyProcessed) {
+          setUploadedDocs(prev => [...prev, newDoc]);
+        }
         setRagMode(true);
         setShowUploadModal(false);
         
-        // Add a system message about the upload
+        // Add appropriate system message based on whether it was new or already processed
+        const systemMessage = isAlreadyProcessed 
+          ? `📋 **Document already processed!**\n\n**${result.filename}** was already in my knowledge base. No re-processing needed.\n\nYou can continue asking questions about this document!`
+          : `✅ **PDF uploaded successfully!**\n\n**${result.filename}** has been processed and added to my knowledge base with ${result.chunks_added} text chunks.\n\nYou can now ask me questions about the content of this document!`;
+        
         setMessages(prev => [...prev, {
           sender: "ai",
-          content: `✅ **PDF uploaded successfully!**\n\n**${result.filename}** has been processed and added to my knowledge base with ${result.chunks_added} text chunks.\n\nYou can now ask me questions about the content of this document!`,
+          content: systemMessage,
           isRag: true
         }]);
       } else {
@@ -282,7 +291,7 @@ Give concise, well-formatted responses using markdown for better readability.`,
           }
         </p>
         <div className={styles.limitNote}>
-          📋 Upload limit: 10MB per file • Documents processed and indexed for search
+          📋 Upload limit: 10MB per file • Multiple files supported • Documents processed and indexed for search
         </div>
         
         {uploadedDocs.length > 0 && (
