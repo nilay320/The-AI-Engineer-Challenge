@@ -281,6 +281,9 @@ Give concise, well-formatted responses using markdown for better readability.`,
             : "Ask me anything about building a successful startup! Upload company documents for more specific insights."
           }
         </p>
+        <div className={styles.limitNote}>
+          📋 Upload limit: 10MB per file • Files are processed and stored locally
+        </div>
         
         {uploadedDocs.length > 0 && (
           <div className={styles.documentsPanel}>
@@ -418,6 +421,7 @@ Give concise, well-formatted responses using markdown for better readability.`,
                   <li>Market research and analysis</li>
                 </ul>
                 <p><em>Please ensure your document contains startup or business-related content.</em></p>
+                <p><strong>📊 Upload Limits:</strong> 10MB per file • Multiple files supported</p>
               </div>
               
               <div 
@@ -437,7 +441,7 @@ Give concise, well-formatted responses using markdown for better readability.`,
                 <div className={styles.dropContent}>
                   📄
                   <p>Click to select or drag and drop a PDF file</p>
-                  <small>Maximum file size: 10MB • Business/startup content only</small>
+                  <small>Maximum: 10MB per file • Business/startup content only</small>
                 </div>
               </div>
               <input

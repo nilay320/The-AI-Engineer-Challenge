@@ -228,6 +228,19 @@ a.secondary {
   max-width: 600px;
 }
 
+.limitNote {
+  text-align: center;
+  margin: 8px auto 16px auto;
+  padding: 8px 16px;
+  color: #007bff;
+  font-size: 0.9rem;
+  font-weight: 500;
+  background: rgba(0, 123, 255, 0.1);
+  border: 1px solid rgba(0, 123, 255, 0.2);
+  border-radius: 8px;
+  max-width: 500px;
+}
+
 /* Documents Panel */
 .documentsPanel {
   width: 100%;
