@@ -101,12 +101,12 @@ async def upload_pdf(file: UploadFile = File(...)):
         if not file.filename.lower().endswith('.pdf'):
             raise HTTPException(status_code=400, detail="Only PDF files are supported.")
         
-        # Check file size (limit to 10MB)
-        max_size = 10 * 1024 * 1024  # 10MB in bytes
+        # Check file size (limit to 5MB)
+        max_size = 5 * 1024 * 1024  # 5MB in bytes
         file_content = await file.read()
         
         if len(file_content) > max_size:
-            raise HTTPException(status_code=400, detail="File size exceeds 10MB limit.")
+            raise HTTPException(status_code=400, detail="File size exceeds 5MB limit.")
         
         # Process the PDF using RAG service
         rag_service = get_rag_service()

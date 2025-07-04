@@ -34,11 +34,11 @@ def analyze_pdf(pdf_path: str):
     
     # Check file size
     file_size = Path(pdf_path).stat().st_size
-    max_size = 10 * 1024 * 1024  # 10MB
+    max_size = 5 * 1024 * 1024  # 5MB
     print(f"📁 File size: {file_size:,} bytes ({file_size/1024/1024:.2f} MB)")
     
     if file_size > max_size:
-        print("❌ ERROR: File exceeds 10MB limit!")
+        print("❌ ERROR: File exceeds 5MB limit!")
         return
     else:
         print("✅ File size OK")

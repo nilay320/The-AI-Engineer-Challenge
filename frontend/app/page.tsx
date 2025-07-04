@@ -291,7 +291,7 @@ Give concise, well-formatted responses using markdown for better readability.`,
           }
         </p>
         <div className={styles.limitNote}>
-          📋 Upload limit: 10MB per file • Multiple files supported • Documents processed and indexed for search
+          📋 Upload limit: 5MB per file • Multiple files supported • Documents processed and indexed for search
         </div>
         
         {uploadedDocs.length > 0 && (
@@ -430,7 +430,7 @@ Give concise, well-formatted responses using markdown for better readability.`,
                   <li>Market research and analysis</li>
                 </ul>
                 <p><em>Please ensure your document contains startup or business-related content.</em></p>
-                <p><strong>📊 Upload Limits:</strong> 10MB per file • Multiple files supported</p>
+                <p><strong>📊 Upload Limits:</strong> 5MB per file • Multiple files supported</p>
               </div>
               
               <div 
@@ -450,7 +450,7 @@ Give concise, well-formatted responses using markdown for better readability.`,
                 <div className={styles.dropContent}>
                   📄
                   <p>Click to select or drag and drop a PDF file</p>
-                  <small>Maximum: 10MB per file • Business/startup content only</small>
+                  <small>Maximum: 5MB per file • Business/startup content only</small>
                 </div>
               </div>
               <input

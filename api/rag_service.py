@@ -118,7 +118,28 @@ class RAGService:
         # Combine keyword analysis and AI analysis
         final_score = (keyword_density * 2 + ai_score) / 3
         
-        is_valid = final_score >= 4.0  # Threshold for acceptance
+        is_valid = final_score >= 4.0
+        
+        # Print detailed validation scores to backend console
+        print("\n" + "="*60)
+        print("📄 PDF VALIDATION ANALYSIS")
+        print("="*60)
+        print(f"📁 Document: First 1000 characters analyzed")
+        print(f"📊 Keyword Analysis:")
+        print(f"   - Keywords found: {keyword_count}")
+        print(f"   - Total words: {word_count}")
+        print(f"   - Keyword density: {keyword_density:.2f}%")
+        print(f"🤖 AI Assessment:")
+        print(f"   - AI Score: {ai_score}/10")
+        print(f"   - AI Reason: {ai_reason}")
+        print(f"🎯 Final Scoring:")
+        print(f"   - Formula: (keyword_density × 2 + ai_score) ÷ 3")
+        print(f"   - Calculation: ({keyword_density:.2f} × 2 + {ai_score}) ÷ 3 = {final_score:.2f}")
+        print(f"   - Threshold: 4.0/10")
+        print(f"   - Result: {'✅ PASS' if is_valid else '❌ FAIL'} ({final_score:.2f}/10)")
+        if not is_valid:
+            print(f"   - Needed: {4.0 - final_score:.2f} more points to pass")
+        print("="*60)  # Threshold for acceptance
         
         return {
             "is_valid": is_valid,
@@ -136,35 +157,47 @@ class RAGService:
     
     def process_pdf(self, file_bytes: bytes, filename: str) -> Dict[str, Any]:
         """Process a PDF file and add it to the vector database after validation."""
+        
+        # Add logging for PDF processing start
+        print(f"\n🔄 Starting PDF processing for: {filename}")
+        print(f"📁 File size: {len(file_bytes):,} bytes ({len(file_bytes)/1024/1024:.2f} MB)")
+        
         try:
             # Check if document already exists
             doc_id = filename  # Use filename as doc ID for simplicity
             if doc_id in self.document_store:
+                print(f"📋 Document '{filename}' already exists in knowledge base - skipping processing")
                 return {
                     "success": True,
                     "document_id": doc_id,
                     "filename": filename,
                     "total_chunks": self.document_store[doc_id]["total_chunks"],
-                    "chunks_added": 0,  # No new chunks added
-                    "text_preview": "Document already exists in the knowledge base.",
+                    "chunks_added": "Already processed",
+                    "text_preview": f"Document '{filename}' has already been processed and indexed for search.",
                     "message": f"📋 Document '{filename}' is already in the knowledge base. No re-processing needed.",
                     "content_validation": {
                         "relevance_score": self.document_store[doc_id]["validation_result"]["final_score"],
-                        "ai_assessment": "Previously validated"
+                        "ai_assessment": "Previously validated and indexed"
                     }
                 }
             
             # Load text from PDF
+            print(f"📄 Extracting text from PDF...")
             loader = TextFileLoader("")
             text = loader.load_from_bytes(file_bytes, filename)
             
             if not text.strip():
+                print(f"❌ No text could be extracted from PDF!")
                 raise ValueError("No text could be extracted from the PDF")
             
+            print(f"✅ Text extraction successful: {len(text)} characters extracted")
+            
             # Validate content is startup/company related
+            print(f"🤖 Running content validation...")
             validation_result = self._validate_startup_content(text)
             
             if not validation_result["is_valid"]:
+                print(f"❌ Content validation FAILED - document will be REJECTED")
                 return {
                     "success": False,
                     "error": f"This document doesn't appear to contain startup or company-related content. "
@@ -174,11 +207,17 @@ class RAGService:
                     "validation_details": validation_result["validation_details"]
                 }
             
+            print(f"✅ Content validation PASSED - proceeding with processing")
+            
             # Split text into chunks
+            print(f"✂️  Splitting text into chunks...")
             chunks = self.text_splitter.split_text(text)
             
             if not chunks:
+                print(f"❌ No chunks could be created from text!")
                 raise ValueError("No chunks could be created from the text")
+            
+            print(f"✅ Created {len(chunks)} text chunks")
             
             # Create metadata for each chunk
             metadatas = []
@@ -193,6 +232,7 @@ class RAGService:
                 })
             
             # Add chunks to vector database
+            print(f"🗄️  Adding chunks to vector database...")
             chunk_ids = self.vector_db.add_texts(chunks, metadatas)
             
             # Store document metadata
@@ -206,7 +246,13 @@ class RAGService:
             }
             
             # Save the vector database state
+            print(f"💾 Saving database state...")
             self._save_database()
+            
+            print(f"🎉 PDF processing completed successfully!")
+            print(f"   - Document: {filename}")
+            print(f"   - Chunks created: {len(chunks)}")
+            print(f"   - Validation score: {validation_result['final_score']}/10")
             
             return {
                 "success": True,
@@ -222,6 +268,7 @@ class RAGService:
             }
             
         except Exception as e:
+            print(f"❌ PDF processing failed with error: {str(e)}")
             return {
                 "success": False,
                 "error": str(e)

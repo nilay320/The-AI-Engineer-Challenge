@@ -88,7 +88,7 @@ The server will start on `http://localhost:8000`
 - **Content-Type**: `multipart/form-data`
 - **File Requirements**: 
   - PDF format only
-  - Max size: 10MB
+  - Max size: 5MB
   - Must contain startup/business-related content
 - **Response**: Processing results with validation
 
