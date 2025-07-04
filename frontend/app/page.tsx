@@ -282,7 +282,7 @@ Give concise, well-formatted responses using markdown for better readability.`,
           }
         </p>
         <div className={styles.limitNote}>
-          📋 Upload limit: 10MB per file • Files are processed and stored locally
+          📋 Upload limit: 10MB per file • Documents processed and indexed for search
         </div>
         
         {uploadedDocs.length > 0 && (
