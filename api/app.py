@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from openai import OpenAI
 import os
 import gc
+import uuid
 from typing import Optional, List, Dict, Any
 from dotenv import load_dotenv
 import json
@@ -52,10 +53,24 @@ def init_rag():
     global qdrant_client
     try:
         qdrant_client = QdrantClient(":memory:")
-        qdrant_client.create_collection(
-            collection_name=collection_name,
-            vectors_config=VectorParams(size=vector_size, distance=Distance.COSINE),
-        )
+        
+        # Try to create collection, recreate if it exists with invalid data
+        try:
+            qdrant_client.create_collection(
+                collection_name=collection_name,
+                vectors_config=VectorParams(size=vector_size, distance=Distance.COSINE),
+            )
+        except Exception as collection_error:
+            print(f"Collection creation failed, recreating: {collection_error}")
+            try:
+                qdrant_client.delete_collection(collection_name)
+            except:
+                pass  # Collection might not exist
+            qdrant_client.create_collection(
+                collection_name=collection_name,
+                vectors_config=VectorParams(size=vector_size, distance=Distance.COSINE),
+            )
+        
         print("RAG initialized successfully")
     except Exception as e:
         print(f"RAG initialization error: {e}")
@@ -412,7 +427,7 @@ async def upload_pdf(file: UploadFile = File(...)):
                         
                         embedding = get_embedding(chunk, client)
                         point = PointStruct(
-                            id=f"{file.filename}_{i + j}",
+                            id=str(uuid.uuid4()),  # Generate proper UUID
                             vector=embedding,
                             payload={
                                 "text": chunk,
@@ -466,11 +481,13 @@ async def upload_pdf(file: UploadFile = File(...)):
             print(f"❌ Vector database error: {e}")
             raise HTTPException(status_code=500, detail=f"Vector database error: {str(e)}")
         
-        # Store document info
+        # Store document info with UUID tracking
+        chunk_uuids = [point.id for point in points]
         documents[file.filename] = {
             "total_chunks": len(chunks),
             "stored_chunks": len(points),
-            "validation": validation
+            "validation": validation,
+            "chunk_uuids": chunk_uuids  # Track UUIDs for potential cleanup
         }
         
         print(f"🎉 Successfully processed {file.filename}")
@@ -521,13 +538,18 @@ async def clear_rag_database():
         if not qdrant_client:
             return {"success": False, "error": "RAG service not initialized"}
             
-        qdrant_client.delete_collection(collection_name)
+        # Delete and recreate collection to clear invalid UUIDs
+        try:
+            qdrant_client.delete_collection(collection_name)
+        except Exception as e:
+            print(f"Collection deletion warning: {e}")
+            
         qdrant_client.create_collection(
             collection_name=collection_name,
             vectors_config=VectorParams(size=vector_size, distance=Distance.COSINE),
         )
         documents.clear()
-        return {"success": True, "message": "Database cleared"}
+        return {"success": True, "message": "Database cleared successfully"}
     except Exception as e:
         return {"success": False, "error": str(e)}
 
