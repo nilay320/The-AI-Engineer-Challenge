@@ -74,8 +74,27 @@ export default function Home() {
       });
       
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Upload failed');
+        // Try to parse as JSON first, fallback to text for HTML error pages
+        let errorMessage = 'Upload failed';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.detail || errorData.error || 'Upload failed';
+        } catch (jsonError) {
+          // If JSON parsing fails, try to extract meaningful error from text/HTML
+          try {
+            const errorText = await response.text();
+            if (response.status === 413 || errorText.includes('Request Entity Too Large') || errorText.includes('size')) {
+              errorMessage = 'File size exceeds 5MB limit. Please choose a smaller file.';
+            } else if (response.status === 400) {
+              errorMessage = 'Invalid file format. Please upload a PDF file.';
+            } else {
+              errorMessage = `Upload failed (${response.status})`;
+            }
+          } catch (textError) {
+            errorMessage = `Upload failed (${response.status})`;
+          }
+        }
+        throw new Error(errorMessage);
       }
       
       const result = await response.json();
