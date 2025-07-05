@@ -212,10 +212,27 @@ def validate_content(text: str) -> Dict[str, Any]:
 def query_documents(query: str, client: OpenAI, top_k: int = 5) -> List[Dict[str, Any]]:
     """Query documents for relevant chunks."""
     try:
+        print(f"🔍 Querying documents:")
+        print(f"   - Query: {query}")
+        print(f"   - Top K: {top_k}")
+        
         if not qdrant_client:
+            print("   - ❌ Qdrant client not initialized")
+            return []
+        
+        # Check collection state
+        try:
+            collection_info = qdrant_client.get_collection(collection_name)
+            print(f"   - Collection points: {collection_info.points_count}")
+            if collection_info.points_count == 0:
+                print("   - ❌ No documents in collection")
+                return []
+        except Exception as e:
+            print(f"   - ❌ Collection error: {e}")
             return []
             
         query_embedding = get_embedding(query, client)
+        print(f"   - Generated query embedding: {len(query_embedding)} dimensions")
         
         search_results = qdrant_client.search(
             collection_name=collection_name,
@@ -223,8 +240,11 @@ def query_documents(query: str, client: OpenAI, top_k: int = 5) -> List[Dict[str
             limit=top_k
         )
         
+        print(f"   - Search returned {len(search_results)} results")
+        
         results = []
-        for result in search_results:
+        for i, result in enumerate(search_results):
+            print(f"   - Result {i+1}: score={result.score:.3f}, filename={result.payload.get('filename', 'unknown')}")
             results.append({
                 "text": result.payload["text"],
                 "filename": result.payload["filename"],
@@ -235,7 +255,9 @@ def query_documents(query: str, client: OpenAI, top_k: int = 5) -> List[Dict[str
         return results
         
     except Exception as e:
-        print(f"Query error: {e}")
+        print(f"❌ Query error: {e}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
         return []
 
 # Initialize RAG on startup
@@ -281,11 +303,26 @@ async def rag_chat(request: RAGChatRequest):
         
         async def generate():
             try:
+                # Debug: Check database state
+                print(f"🔍 RAG Chat Debug:")
+                print(f"   - Query: {request.user_message}")
+                print(f"   - Qdrant client initialized: {qdrant_client is not None}")
+                
+                if qdrant_client:
+                    try:
+                        collection_info = qdrant_client.get_collection(collection_name)
+                        print(f"   - Collection points: {collection_info.points_count}")
+                        print(f"   - Documents in memory: {len(documents)}")
+                        print(f"   - Document names: {list(documents.keys())}")
+                    except Exception as e:
+                        print(f"   - Collection error: {e}")
+                
                 # Get relevant documents
                 relevant_docs = query_documents(request.user_message, client, 5)
+                print(f"   - Found {len(relevant_docs)} relevant documents")
                 
                 if not relevant_docs:
-                    yield "I don't have any relevant documents to answer your question."
+                    yield "I don't have any relevant documents to answer your question. This might be because the documents were uploaded in a different serverless function instance. In Vercel's serverless environment, uploaded documents don't persist between requests. Please try uploading your PDF again and then immediately asking your question."
                     return
                 
                 # Create context
@@ -580,6 +617,30 @@ async def query_documents_endpoint(request: dict):
 @app.get("/api/health")
 async def health_check():
     return {"status": "ok", "rag_initialized": qdrant_client is not None}
+
+# Debug endpoint to check RAG state
+@app.get("/api/rag-debug")
+async def rag_debug():
+    """Debug endpoint to check RAG state."""
+    try:
+        debug_info = {
+            "qdrant_initialized": qdrant_client is not None,
+            "documents_in_memory": len(documents),
+            "document_names": list(documents.keys()),
+            "collection_points": 0,
+            "collection_error": None
+        }
+        
+        if qdrant_client:
+            try:
+                collection_info = qdrant_client.get_collection(collection_name)
+                debug_info["collection_points"] = collection_info.points_count
+            except Exception as e:
+                debug_info["collection_error"] = str(e)
+        
+        return debug_info
+    except Exception as e:
+        return {"error": str(e)}
 
 # Entry point for running the application directly
 if __name__ == "__main__":
