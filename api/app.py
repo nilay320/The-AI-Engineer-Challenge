@@ -7,6 +7,7 @@ from pydantic import BaseModel
 # Import OpenAI client for interacting with OpenAI's API
 from openai import OpenAI
 import os
+import gc
 from typing import Optional, List, Dict, Any
 from dotenv import load_dotenv
 import json
@@ -59,6 +60,11 @@ def init_rag():
     except Exception as e:
         print(f"RAG initialization error: {e}")
 
+def cleanup_memory():
+    """Force garbage collection to free memory."""
+    gc.collect()
+    print("🧹 Memory cleanup completed")
+
 def get_embedding(text: str, client: OpenAI) -> List[float]:
     """Get embedding for text using OpenAI."""
     try:
@@ -79,57 +85,91 @@ def get_embedding(text: str, client: OpenAI) -> List[float]:
         return [0.0] * vector_size
 
 def extract_text_from_pdf(file_bytes: bytes) -> str:
-    """Extract text from PDF bytes."""
+    """Extract text from PDF bytes with memory optimization."""
     try:
         print(f"🔍 Processing PDF of {len(file_bytes)} bytes")
+        
+        # Create PDF reader with memory optimization
         pdf_file = io.BytesIO(file_bytes)
         pdf_reader = PyPDF2.PdfReader(pdf_file)
         
         print(f"📄 PDF has {len(pdf_reader.pages)} pages")
         
-        # Limit pages to prevent memory issues
-        max_pages = 20
+        # Limit pages to prevent memory issues (reduced from 20 to 10)
+        max_pages = 10
         pages_to_process = min(len(pdf_reader.pages), max_pages)
         if len(pdf_reader.pages) > max_pages:
             print(f"⚠️ Limiting to first {max_pages} pages to prevent memory issues")
         
-        text = ""
+        # Use list for efficient string joining (reduces memory copies)
+        text_parts = []
         for i in range(pages_to_process):
             try:
                 page_text = pdf_reader.pages[i].extract_text()
-                if page_text:
-                    text += page_text + "\n"
+                if page_text and page_text.strip():
+                    # Limit page text length to prevent memory explosion
+                    if len(page_text) > 10000:  # 10KB per page max
+                        page_text = page_text[:10000] + "... [truncated]"
+                    text_parts.append(page_text)
                 print(f"✅ Processed page {i+1}/{pages_to_process}")
             except Exception as e:
                 print(f"⚠️ Error extracting page {i+1}: {e}")
                 continue
         
+        # Join all parts efficiently
+        text = "\n".join(text_parts)
+        
+        # Limit total text length to prevent memory issues
+        max_text_length = 50000  # 50KB max total text
+        if len(text) > max_text_length:
+            text = text[:max_text_length] + "\n... [Document truncated to prevent memory issues]"
+            print(f"⚠️ Text truncated to {max_text_length} characters to prevent memory issues")
+        
         print(f"✅ Extracted {len(text)} characters from {pages_to_process} pages")
+        
+        # Clear intermediate objects to free memory
+        del text_parts
+        del pdf_file
+        del pdf_reader
+        
+        # Force garbage collection
+        cleanup_memory()
+        
         return text.strip()
         
     except Exception as e:
         print(f"❌ PDF extraction error: {e}")
         raise Exception(f"Failed to extract text from PDF: {str(e)}")
 
-def chunk_text(text: str, chunk_size: int = 1000, overlap: int = 200) -> List[str]:
-    """Split text into chunks."""
+def chunk_text(text: str, chunk_size: int = 800, overlap: int = 150) -> List[str]:
+    """Split text into chunks with memory optimization."""
     if len(text) <= chunk_size:
         return [text]
     
     chunks = []
     start = 0
     
-    while start < len(text):
+    # Limit total chunks to prevent memory explosion
+    max_chunks = 25
+    
+    while start < len(text) and len(chunks) < max_chunks:
         end = start + chunk_size
         if end > len(text):
             end = len(text)
         
         chunk = text[start:end]
-        chunks.append(chunk)
+        
+        # Only add non-empty chunks
+        if chunk.strip():
+            chunks.append(chunk)
         
         start = end - overlap
         if start >= len(text):
             break
+    
+    # If we hit the chunk limit, log it
+    if len(chunks) >= max_chunks and start < len(text):
+        print(f"⚠️ Chunk limit reached ({max_chunks}), remaining text truncated to prevent memory issues")
     
     return chunks
 
@@ -337,33 +377,39 @@ async def upload_pdf(file: UploadFile = File(...)):
             print(f"❌ OpenAI client error: {e}")
             raise HTTPException(status_code=500, detail=f"OpenAI client error: {str(e)}")
         
-        # Chunk text
+        # Chunk text with memory optimization
         print("✂️ Chunking text...")
         try:
             chunks = chunk_text(text)
             print(f"✅ Created {len(chunks)} chunks")
             
-            # Limit chunks to prevent memory issues
-            if len(chunks) > 50:
-                chunks = chunks[:50]
-                print(f"⚠️ Limited to first 50 chunks to prevent memory issues")
+            # Limit chunks to prevent memory issues (reduced from 50 to 25)
+            if len(chunks) > 25:
+                chunks = chunks[:25]
+                print(f"⚠️ Limited to first 25 chunks to prevent memory issues")
                 
         except Exception as e:
             print(f"❌ Text chunking error: {e}")
             raise HTTPException(status_code=500, detail=f"Text processing error: {str(e)}")
         
-        # Process chunks in smaller batches to avoid memory issues
+        # Process chunks in very small batches to avoid memory issues
         print("🧠 Generating embeddings...")
         points = []
-        batch_size = 10  # Process 10 chunks at a time
+        batch_size = 3  # Reduced from 10 to 3 chunks at a time
         
         try:
             for i in range(0, len(chunks), batch_size):
                 batch_chunks = chunks[i:i + batch_size]
                 print(f"Processing batch {i//batch_size + 1}/{(len(chunks) + batch_size - 1)//batch_size}")
                 
+                # Process each chunk in the batch
+                batch_points = []
                 for j, chunk in enumerate(batch_chunks):
                     try:
+                        # Truncate chunk if too long for embedding API
+                        if len(chunk) > 5000:  # Reduced from default to 5000 chars
+                            chunk = chunk[:5000] + "... [truncated for memory optimization]"
+                        
                         embedding = get_embedding(chunk, client)
                         point = PointStruct(
                             id=f"{file.filename}_{i + j}",
@@ -374,11 +420,23 @@ async def upload_pdf(file: UploadFile = File(...)):
                                 "chunk_index": i + j
                             }
                         )
-                        points.append(point)
+                        batch_points.append(point)
                     except Exception as e:
                         print(f"❌ Error processing chunk {i + j}: {e}")
                         # Continue with other chunks
                         continue
+                
+                # Add batch to main points list
+                points.extend(batch_points)
+                
+                # Clear batch variables to free memory
+                del batch_points
+                del batch_chunks
+                
+                # Force garbage collection after each batch
+                cleanup_memory()
+                
+                print(f"✅ Completed batch {i//batch_size + 1}, total points: {len(points)}")
             
             print(f"✅ Generated {len(points)} embeddings")
             
@@ -386,15 +444,21 @@ async def upload_pdf(file: UploadFile = File(...)):
             print(f"❌ Embedding generation error: {e}")
             raise HTTPException(status_code=500, detail=f"Embedding generation error: {str(e)}")
         
-        # Upsert points to vector database
+        # Upsert points to vector database in smaller batches
         print("💾 Storing in vector database...")
         try:
             if points:
-                qdrant_client.upsert(
-                    collection_name=collection_name,
-                    points=points
-                )
-                print(f"✅ Stored {len(points)} vectors")
+                # Upload in smaller batches to prevent memory spikes
+                upload_batch_size = 5
+                for i in range(0, len(points), upload_batch_size):
+                    batch_points = points[i:i + upload_batch_size]
+                    qdrant_client.upsert(
+                        collection_name=collection_name,
+                        points=batch_points
+                    )
+                    print(f"✅ Uploaded batch {i//upload_batch_size + 1}/{(len(points) + upload_batch_size - 1)//upload_batch_size}")
+                
+                print(f"✅ Stored {len(points)} vectors in total")
             else:
                 raise HTTPException(status_code=500, detail="No valid embeddings generated")
                 
@@ -410,6 +474,9 @@ async def upload_pdf(file: UploadFile = File(...)):
         }
         
         print(f"🎉 Successfully processed {file.filename}")
+        
+        # Final memory cleanup
+        cleanup_memory()
         
         return {
             "success": True,
