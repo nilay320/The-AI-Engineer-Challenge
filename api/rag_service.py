@@ -7,16 +7,26 @@ import json
 import re
 
 # Add the parent directory to the path to import aimakerspace
-sys.path.append(str(Path(__file__).parent.parent))
+current_dir = Path(__file__).parent
+parent_dir = current_dir.parent
+sys.path.insert(0, str(parent_dir))
+sys.path.insert(0, str(current_dir))
 
-from aimakerspace import (
-    TextFileLoader, 
-    CharacterTextSplitter, 
-    VectorDatabase, 
-    EmbeddingModel
-)
-from aimakerspace.openai_utils.chatmodel import ChatOpenAI
-from aimakerspace.openai_utils.prompts import StartupRAGChatPrompt
+try:
+    from aimakerspace import (
+        TextFileLoader, 
+        CharacterTextSplitter, 
+        VectorDatabase, 
+        EmbeddingModel
+    )
+    from aimakerspace.openai_utils.chatmodel import ChatOpenAI
+    from aimakerspace.openai_utils.prompts import StartupRAGChatPrompt
+except ImportError as e:
+    print(f"ImportError: {e}")
+    print(f"Current directory: {current_dir}")
+    print(f"Parent directory: {parent_dir}")
+    print(f"Python path: {sys.path}")
+    raise
 
 
 class RAGService:

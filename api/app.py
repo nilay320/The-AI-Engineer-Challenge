@@ -12,7 +12,17 @@ from dotenv import load_dotenv
 import json
 
 # Import RAG service for document processing and retrieval
-from rag_service import get_rag_service
+import sys
+import os
+sys.path.append(os.path.dirname(__file__))
+
+try:
+    from rag_service import get_rag_service
+except ImportError as e:
+    print(f"Warning: Could not import rag_service: {e}")
+    # Create a fallback function for when RAG service is not available
+    def get_rag_service():
+        raise HTTPException(status_code=500, detail="RAG service not available")
 
 # Initialize FastAPI application with a title
 app = FastAPI(title="OpenAI Chat API with RAG")
