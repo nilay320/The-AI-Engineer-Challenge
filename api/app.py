@@ -9,9 +9,11 @@ from openai import OpenAI
 import os
 import gc
 import uuid
+import pickle
+import json
+from pathlib import Path
 from typing import Optional, List, Dict, Any
 from dotenv import load_dotenv
-import json
 import PyPDF2
 import io
 from qdrant_client import QdrantClient
@@ -47,6 +49,11 @@ qdrant_client = None
 collection_name = "startup_docs"
 vector_size = 1536
 documents = {}
+
+# Persistence paths
+PERSIST_DIR = Path("/tmp/rag_data")
+DOCUMENTS_FILE = PERSIST_DIR / "documents.pkl"
+VECTORS_FILE = PERSIST_DIR / "vectors.pkl"
 
 def init_rag():
     """Initialize RAG components."""
@@ -322,8 +329,30 @@ async def rag_chat(request: RAGChatRequest):
                 print(f"   - Found {len(relevant_docs)} relevant documents")
                 
                 if not relevant_docs:
-                    yield "I don't have any relevant documents to answer your question. This might be because the documents were uploaded in a different serverless function instance. In Vercel's serverless environment, uploaded documents don't persist between requests. Please try uploading your PDF again and then immediately asking your question."
+                    # Send no context found message in SSE format
+                    yield "data: " + json.dumps({
+                        "type": "content",
+                        "content": "I don't have any relevant documents to answer your question. This might be because the documents were uploaded in a different serverless function instance. Please try uploading your PDF again and then immediately asking your question."
+                    }) + "\n\n"
+                    yield "data: " + json.dumps({"type": "done"}) + "\n\n"
                     return
+                
+                # Send metadata first (sources info)
+                sources = [
+                    {
+                        "filename": doc["filename"],
+                        "chunk_index": doc["chunk_index"],
+                        "score": doc["score"]
+                    }
+                    for doc in relevant_docs
+                ]
+                
+                yield "data: " + json.dumps({
+                    "type": "metadata",
+                    "sources": sources,
+                    "used_context": True,
+                    "context_length": sum(len(doc["text"]) for doc in relevant_docs)
+                }) + "\n\n"
                 
                 # Create context
                 context = "\n\n".join([doc["text"] for doc in relevant_docs])
@@ -338,7 +367,7 @@ Question: {request.user_message}
 
 Answer:"""
                 
-                # Stream response
+                # Stream response in SSE format
                 stream = client.chat.completions.create(
                     model="gpt-4o-mini",
                     messages=[
@@ -352,10 +381,19 @@ Answer:"""
                 
                 for chunk in stream:
                     if chunk.choices[0].delta.content is not None:
-                        yield chunk.choices[0].delta.content
+                        yield "data: " + json.dumps({
+                            "type": "content",
+                            "content": chunk.choices[0].delta.content
+                        }) + "\n\n"
+                
+                # Send completion message
+                yield "data: " + json.dumps({"type": "done"}) + "\n\n"
                         
             except Exception as e:
-                yield f"Error: {str(e)}"
+                yield "data: " + json.dumps({
+                    "success": False,
+                    "error": f"Error: {str(e)}"
+                }) + "\n\n"
 
         return StreamingResponse(generate(), media_type="text/plain")
     
