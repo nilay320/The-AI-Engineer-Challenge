@@ -11,17 +11,14 @@ from typing import Optional
 from dotenv import load_dotenv
 import json
 
-# Import RAG service for document processing and retrieval
-import sys
-import os
-sys.path.append(os.path.dirname(__file__))
-
+# Import simple RAG service for document processing and retrieval
 try:
-    from rag_service import get_rag_service
+    from simple_rag import get_simple_rag_service
+    RAG_AVAILABLE = True
 except ImportError as e:
-    print(f"Warning: Could not import rag_service: {e}")
-    # Create a fallback function for when RAG service is not available
-    def get_rag_service():
+    print(f"Warning: Could not import simple RAG service: {e}")
+    RAG_AVAILABLE = False
+    def get_simple_rag_service():
         raise HTTPException(status_code=500, detail="RAG service not available")
 
 # Initialize FastAPI application with a title
@@ -90,7 +87,7 @@ async def chat(request: ChatRequest):
 async def rag_chat(request: RAGChatRequest):
     """Enhanced chat endpoint that uses RAG with uploaded documents."""
     try:
-        rag_service = get_rag_service()
+        rag_service = get_simple_rag_service()
         
         async def generate():
             # Stream the RAG response
@@ -119,7 +116,7 @@ async def upload_pdf(file: UploadFile = File(...)):
             raise HTTPException(status_code=400, detail="File size exceeds 5MB limit.")
         
         # Process the PDF using RAG service
-        rag_service = get_rag_service()
+        rag_service = get_simple_rag_service()
         result = rag_service.process_pdf(file_content, file.filename)
         
         if not result["success"]:
@@ -137,7 +134,7 @@ async def upload_pdf(file: UploadFile = File(...)):
 async def get_rag_stats():
     """Get statistics about the current RAG database."""
     try:
-        rag_service = get_rag_service()
+        rag_service = get_simple_rag_service()
         stats = rag_service.get_database_stats()
         return stats
     except Exception as e:
@@ -148,7 +145,7 @@ async def get_rag_stats():
 async def clear_rag_database():
     """Clear all documents from the RAG database."""
     try:
-        rag_service = get_rag_service()
+        rag_service = get_simple_rag_service()
         result = rag_service.clear_database()
         
         if not result["success"]:
@@ -169,7 +166,7 @@ async def query_documents(request: dict):
         if not query:
             raise HTTPException(status_code=400, detail="Query parameter is required.")
         
-        rag_service = get_rag_service()
+        rag_service = get_simple_rag_service()
         result = rag_service.query_documents(query, top_k)
         
         return result
