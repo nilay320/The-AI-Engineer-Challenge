@@ -62,29 +62,54 @@ def init_rag():
 def get_embedding(text: str, client: OpenAI) -> List[float]:
     """Get embedding for text using OpenAI."""
     try:
+        # Truncate text if too long to prevent API errors
+        max_length = 8000  # Conservative limit for OpenAI embeddings
+        if len(text) > max_length:
+            text = text[:max_length]
+            print(f"⚠️ Truncated text to {max_length} characters for embedding")
+        
         response = client.embeddings.create(
             model="text-embedding-3-small",
-            input=text
+            input=text.strip()
         )
         return response.data[0].embedding
     except Exception as e:
-        print(f"Embedding error: {e}")
+        print(f"❌ Embedding error for text length {len(text)}: {e}")
+        # Return zero vector as fallback
         return [0.0] * vector_size
 
 def extract_text_from_pdf(file_bytes: bytes) -> str:
     """Extract text from PDF bytes."""
     try:
+        print(f"🔍 Processing PDF of {len(file_bytes)} bytes")
         pdf_file = io.BytesIO(file_bytes)
         pdf_reader = PyPDF2.PdfReader(pdf_file)
         
-        text = ""
-        for page in pdf_reader.pages:
-            text += page.extract_text() + "\n"
+        print(f"📄 PDF has {len(pdf_reader.pages)} pages")
         
+        # Limit pages to prevent memory issues
+        max_pages = 20
+        pages_to_process = min(len(pdf_reader.pages), max_pages)
+        if len(pdf_reader.pages) > max_pages:
+            print(f"⚠️ Limiting to first {max_pages} pages to prevent memory issues")
+        
+        text = ""
+        for i in range(pages_to_process):
+            try:
+                page_text = pdf_reader.pages[i].extract_text()
+                if page_text:
+                    text += page_text + "\n"
+                print(f"✅ Processed page {i+1}/{pages_to_process}")
+            except Exception as e:
+                print(f"⚠️ Error extracting page {i+1}: {e}")
+                continue
+        
+        print(f"✅ Extracted {len(text)} characters from {pages_to_process} pages")
         return text.strip()
+        
     except Exception as e:
-        print(f"PDF extraction error: {e}")
-        return ""
+        print(f"❌ PDF extraction error: {e}")
+        raise Exception(f"Failed to extract text from PDF: {str(e)}")
 
 def chunk_text(text: str, chunk_size: int = 1000, overlap: int = 200) -> List[str]:
     """Split text into chunks."""
@@ -250,82 +275,158 @@ Answer:"""
 async def upload_pdf(file: UploadFile = File(...)):
     """Upload and process a PDF file for RAG."""
     try:
+        print(f"📄 Starting PDF upload: {file.filename}")
+        
         if not qdrant_client:
+            print("❌ RAG service not initialized")
             raise HTTPException(status_code=500, detail="RAG service not initialized")
             
         # Validate file type
         if not file.filename.lower().endswith('.pdf'):
+            print("❌ Invalid file type")
             raise HTTPException(status_code=400, detail="Only PDF files are supported.")
         
         # Check file size (limit to 5MB)
         max_size = 5 * 1024 * 1024
         file_content = await file.read()
+        print(f"📁 File size: {len(file_content)} bytes")
         
         if len(file_content) > max_size:
+            print("❌ File too large")
             raise HTTPException(status_code=400, detail="File size exceeds 5MB limit.")
         
-        # Extract text
-        text = extract_text_from_pdf(file_content)
-        if not text:
-            raise HTTPException(status_code=400, detail="Could not extract text from PDF")
+        # Extract text with better error handling
+        print("🔍 Extracting text from PDF...")
+        try:
+            text = extract_text_from_pdf(file_content)
+            if not text or len(text.strip()) < 10:
+                print("❌ No text extracted")
+                raise HTTPException(status_code=400, detail="Could not extract meaningful text from PDF")
+            print(f"✅ Extracted {len(text)} characters")
+        except Exception as e:
+            print(f"❌ PDF extraction failed: {e}")
+            raise HTTPException(status_code=400, detail=f"PDF extraction failed: {str(e)}")
         
         # Validate content
-        validation = validate_content(text)
-        if not validation["is_valid"]:
-            raise HTTPException(
-                status_code=400, 
-                detail=f"Document doesn't contain enough business content. {validation['reason']}"
-            )
+        print("🤖 Validating content...")
+        try:
+            validation = validate_content(text)
+            if not validation["is_valid"]:
+                print(f"❌ Content validation failed: {validation['reason']}")
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"Document doesn't contain enough business content. {validation['reason']}"
+                )
+            print(f"✅ Content validation passed: {validation['reason']}")
+        except HTTPException:
+            raise
+        except Exception as e:
+            print(f"❌ Content validation error: {e}")
+            raise HTTPException(status_code=500, detail=f"Content validation error: {str(e)}")
         
         # Get OpenAI client
         api_key = os.environ.get("OPENAI_API_KEY")
         if not api_key:
+            print("❌ No OpenAI API key")
             raise HTTPException(status_code=500, detail="OpenAI API key not configured.")
-        client = OpenAI(api_key=api_key)
+        
+        try:
+            client = OpenAI(api_key=api_key)
+            print("✅ OpenAI client initialized")
+        except Exception as e:
+            print(f"❌ OpenAI client error: {e}")
+            raise HTTPException(status_code=500, detail=f"OpenAI client error: {str(e)}")
         
         # Chunk text
-        chunks = chunk_text(text)
+        print("✂️ Chunking text...")
+        try:
+            chunks = chunk_text(text)
+            print(f"✅ Created {len(chunks)} chunks")
+            
+            # Limit chunks to prevent memory issues
+            if len(chunks) > 50:
+                chunks = chunks[:50]
+                print(f"⚠️ Limited to first 50 chunks to prevent memory issues")
+                
+        except Exception as e:
+            print(f"❌ Text chunking error: {e}")
+            raise HTTPException(status_code=500, detail=f"Text processing error: {str(e)}")
         
-        # Add chunks to vector database
+        # Process chunks in smaller batches to avoid memory issues
+        print("🧠 Generating embeddings...")
         points = []
-        for i, chunk in enumerate(chunks):
-            embedding = get_embedding(chunk, client)
-            point = PointStruct(
-                id=f"{file.filename}_{i}",
-                vector=embedding,
-                payload={
-                    "text": chunk,
-                    "filename": file.filename,
-                    "chunk_index": i
-                }
-            )
-            points.append(point)
+        batch_size = 10  # Process 10 chunks at a time
         
-        # Upsert points
-        qdrant_client.upsert(
-            collection_name=collection_name,
-            points=points
-        )
+        try:
+            for i in range(0, len(chunks), batch_size):
+                batch_chunks = chunks[i:i + batch_size]
+                print(f"Processing batch {i//batch_size + 1}/{(len(chunks) + batch_size - 1)//batch_size}")
+                
+                for j, chunk in enumerate(batch_chunks):
+                    try:
+                        embedding = get_embedding(chunk, client)
+                        point = PointStruct(
+                            id=f"{file.filename}_{i + j}",
+                            vector=embedding,
+                            payload={
+                                "text": chunk,
+                                "filename": file.filename,
+                                "chunk_index": i + j
+                            }
+                        )
+                        points.append(point)
+                    except Exception as e:
+                        print(f"❌ Error processing chunk {i + j}: {e}")
+                        # Continue with other chunks
+                        continue
+            
+            print(f"✅ Generated {len(points)} embeddings")
+            
+        except Exception as e:
+            print(f"❌ Embedding generation error: {e}")
+            raise HTTPException(status_code=500, detail=f"Embedding generation error: {str(e)}")
+        
+        # Upsert points to vector database
+        print("💾 Storing in vector database...")
+        try:
+            if points:
+                qdrant_client.upsert(
+                    collection_name=collection_name,
+                    points=points
+                )
+                print(f"✅ Stored {len(points)} vectors")
+            else:
+                raise HTTPException(status_code=500, detail="No valid embeddings generated")
+                
+        except Exception as e:
+            print(f"❌ Vector database error: {e}")
+            raise HTTPException(status_code=500, detail=f"Vector database error: {str(e)}")
         
         # Store document info
         documents[file.filename] = {
             "total_chunks": len(chunks),
+            "stored_chunks": len(points),
             "validation": validation
         }
+        
+        print(f"🎉 Successfully processed {file.filename}")
         
         return {
             "success": True,
             "document_id": file.filename,
             "filename": file.filename,
             "total_chunks": len(chunks),
-            "chunks_added": len(chunks),
+            "chunks_added": len(points),
             "text_preview": text[:200] + "..." if len(text) > 200 else text,
-            "message": f"Successfully processed {file.filename} with {len(chunks)} chunks"
+            "message": f"Successfully processed {file.filename} with {len(points)} chunks"
         }
         
     except HTTPException:
         raise
     except Exception as e:
+        print(f"❌ Unexpected error in PDF upload: {e}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"PDF processing error: {str(e)}")
 
 # Get database statistics
